@@ -1,25 +1,50 @@
-plugins {
-	id 'war'
-	id 'eclipse-wtp'
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.7.0'
+    }
 }
+
+plugins {
+    id 'war'
+    id 'eclipse-wtp'
+}
+apply plugin: 'com.bmuschko.tomcat'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 tasks.withType(JavaCompile) {options.encoding = 'UTF-8'}
-repositories.mavenCentral()
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    all*.exclude module:'jdbc-stdext'
+}
 
 dependencies {
-	compileOnly 'jakarta.servlet:jakarta.servlet-api:5.0.+'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.+'
+    def tomcatVersion = '8.5.71'
+    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
+           "org.apache.tomcat.embed:tomcat-embed-logging-juli:8.5.2",
+           "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
 
-	compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
-	compileOnly 'org.apache.tomcat:tomcat-servlet-api:8.5.71'
-	compileOnly 'org.apache.tomcat:tomcat-jsp-api:8.5.71'
-	implementation 'struts:struts:1.1'
-	implementation 'struts:struts-el:1.1'
-	implementation 'org.webjars:jquery:3.6.0'
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    compileOnly 'org.apache.tomcat:tomcat-servlet-api:8.5.71'
+    compileOnly 'org.apache.tomcat:tomcat-jsp-api:8.5.71'
+    implementation 'struts:struts:1.1'
+    implementation 'struts:struts-el:1.1'
+    implementation 'org.webjars:jquery:3.6.0'
+}
+
+tomcat {
+    httpProtocol = 'org.apache.coyote.http11.Http11Nio2Protocol'
+    ajpProtocol  = 'org.apache.coyote.ajp.AjpNio2Protocol'
 }
 
 eclipse.wtp.facet.file.withXml { xml ->
-	def node = xml.asNode();
-	if (!node.runtime) node.appendNode('runtime', [name: 'Tomcat8 (Java8)'])
+    def node = xml.asNode();
+    if (!node.runtime) node.appendNode('runtime', [name: 'Tomcat8 (Java8)'])
 }
